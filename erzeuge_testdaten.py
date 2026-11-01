@@ -37,7 +37,8 @@ def data_generation(typen, groessen, material, lieferant):
 saubere_liste = data_generation(typen_liste, groessen_liste, material_liste, lieferant_liste)
 
 def fehler_injektion(list_of_data, daten_typen):
-
+    daten_typen_int = ["preis","gewicht"]
+    daten_typen_str = ["artikelnummer", "bezeichnung", "material", "lieferant", "letzte_aenderung"]
     data_list_copy = copy.deepcopy(list_of_data)
 
     # Exaktes Zeilenduplikat
@@ -66,9 +67,10 @@ def fehler_injektion(list_of_data, daten_typen):
 
     # Falsche Datentypen
 
-
-    
-
+    datensatz_falsche_datentyp = copy.deepcopy(data_list_copy[random.randint(0, len(data_list_copy)-1)])
+    datensatz_falsche_datentyp[random.choice(daten_typen_str)] = data_list_copy[random.randint(0, len(data_list_copy)-1)][random.choice(daten_typen_int)]
+    datensatz_falsche_datentyp[random.choice(daten_typen_int)] = data_list_copy[random.randint(0, len(data_list_copy)-1)][random.choice(daten_typen_str)]
+    data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_falsche_datentyp)
 
 
 
