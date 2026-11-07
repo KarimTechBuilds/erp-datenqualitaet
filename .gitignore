@@ -1,0 +1,7 @@
+__pycache__/
+.idea/
+.vscode/
+*.db
+*.csv
+!artikel_roh.csv
+!zu_pruefen.csv

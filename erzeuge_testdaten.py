@@ -1,6 +1,7 @@
 import random
 from datetime import date, timedelta
 import copy
+import csv
 
 random.seed(42)
 
@@ -37,43 +38,83 @@ def data_generation(typen, groessen, material, lieferant):
 saubere_liste = data_generation(typen_liste, groessen_liste, material_liste, lieferant_liste)
 
 def fehler_injektion(list_of_data, daten_typen):
-    daten_typen_int = ["preis","gewicht"]
-    daten_typen_str = ["artikelnummer", "bezeichnung", "material", "lieferant", "letzte_aenderung"]
+
+    zaeler = {"exaktes_duplikat": 0, "id_kollision": 0, "logisches_duplikat": 0, "fehlende_wert": 0, "material": 0, "komma": 0, "datum": 0, "leerzeichen": 0}
     data_list_copy = copy.deepcopy(list_of_data)
+    material_varianten = {"Aluminium": ["Alu", "ALUMINIUM", "aluminium ", "ALU"], "Stahl": ["St", "STAHL", "stahl "], "Edelstahl": ["Edelst.", "EDELSTAHL", "edelstahl "], "Messing": ["Ms", "MESSING", "messing "], "Kunststoff": ["Kunstst.", "KUNSTSTOFF", "kunststoff "], "Kupfer": ["kupfer ", "Cu", "KUPFER"], "Titan": ["TITAN", "titan ", "Ti"]}
+    anzahl_pro_typ = 5
+
+    # Formatfehler
+
+    
+    for datensatz in random.sample(data_list_copy, anzahl_pro_typ):
+        datensatz["material"] = random.choice(material_varianten[datensatz["material"]])
+        zaeler["material"] += 1
+
+    # Dezimalkomma
+
+    for datensatz in random.sample(data_list_copy, anzahl_pro_typ ):
+        datensatz["preis"] = f"{datensatz['preis']:.2f}".replace(".", ",")
+        zaeler["komma"] += 1
+
+    # Datumsformat
+
+    for datensatz in random.sample(data_list_copy, anzahl_pro_typ):
+        datum = date.fromisoformat(datensatz["letzte_aenderung"])
+        datensatz["letzte_aenderung"] = datum.strftime(random.choice(["%d.%m.%Y", "%d/%m/%Y" ]))
+        zaeler["datum"] += 1
+
+    # Leerzeichen
+    
+    for datensatz in random.sample(data_list_copy, anzahl_pro_typ):
+        datensatz["bezeichnung"] = " " + datensatz["bezeichnung"]+ " "
+        zaeler["leerzeichen"] += 1
 
     # Exaktes Zeilenduplikat
-
-    datensatz_zum_kopieren = copy.deepcopy(data_list_copy[random.randint(0, 199)])
-    data_list_copy.append(datensatz_zum_kopieren)
-    data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_zum_kopieren)
+    for _ in range(anzahl_pro_typ):
+        datensatz_zum_kopieren = copy.deepcopy(data_list_copy[random.randint(0, 199)])
+        data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_zum_kopieren)
+        zaeler["exaktes_duplikat"] += 1
 
     # Logisches Duplikat
-
-    datensatz_falsch_ID = copy.deepcopy(data_list_copy[random.randint(0, len(data_list_copy)-1)])
-    datensatz_falsch_ID["artikelnummer"] = "A-" + str(random.randint(1000, 9999))
-    data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_falsch_ID)
+    for n in range(anzahl_pro_typ):
+        datensatz_falsch_ID = copy.deepcopy(data_list_copy[random.randint(0, len(data_list_copy)-1)])
+        datensatz_falsch_ID["artikelnummer"] = f"A-{9001+n}"
+        data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_falsch_ID)
+        zaeler["logisches_duplikat"] += 1
 
     # ID-Kollision
-
-    datensatz_ID_kollision = copy.deepcopy(data_list_copy[random.randint(0, len(data_list_copy)-1)])
-    datensatz_ID_kollision["artikelnummer"] = data_list_copy[random.randint(0, 199)]["artikelnummer"]
-    data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_ID_kollision)
+    for _ in range(anzahl_pro_typ):
+        datensatz_ID_kollision = data_list_copy[random.randint(0, len(data_list_copy)-1)]
+        datensatz_ID_kollision["artikelnummer"] = data_list_copy[random.randint(0, 199)]["artikelnummer"]
+        zaeler["id_kollision"] += 1
 
     # Fehlende Werte
+    pflichtfelder = ["bezeichnung", "material", "gewicht", "preis", "lieferant"]
+    for _ in range(anzahl_pro_typ):
+        datensatz_fehlenden_Wert =data_list_copy[random.randint(0, len(data_list_copy)-1)]
+        datensatz_fehlenden_Wert[random.choice(pflichtfelder)] = None
+        zaeler["fehlende_wert"] += 1
 
-    datensatz_fehlenden_Wert = copy.deepcopy(data_list_copy[random.randint(0, len(data_list_copy)-1)])
-    datensatz_fehlenden_Wert[random.choice(daten_typen)] = None
-    data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_fehlenden_Wert)
-
-    # Falsche Datentypen
-
-    datensatz_falsche_datentyp = copy.deepcopy(data_list_copy[random.randint(0, len(data_list_copy)-1)])
-    datensatz_falsche_datentyp[random.choice(daten_typen_str)] = data_list_copy[random.randint(0, len(data_list_copy)-1)][random.choice(daten_typen_int)]
-    datensatz_falsche_datentyp[random.choice(daten_typen_int)] = data_list_copy[random.randint(0, len(data_list_copy)-1)][random.choice(daten_typen_str)]
-    data_list_copy.insert(random.randint(0, len(data_list_copy)-1), datensatz_falsche_datentyp)
-
-
-
-    return data_list_copy
     
-korrumpierte_liste = fehler_injektion(saubere_liste, daten_typen)
+
+    
+
+
+
+    return data_list_copy, zaeler
+    
+korrumpierte_list, zaeler = fehler_injektion(saubere_liste, daten_typen)
+
+# CSV schreiben
+
+with open("artikel_roh.csv", "w", newline = "", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=daten_typen)
+    writer.writeheader()
+    writer.writerows(korrumpierte_list)
+
+# Baseline schreiben
+with open("fehler_baseline.md", "w", encoding="utf-8") as f:
+    f.write("# Fehler-Baseline\n\n| Fehlerart | Anzahl |\n|---|---|\n")
+    for fehlerart, anzahl in zaeler.items():
+        f.write(f"| {fehlerart} | {anzahl} |\n")

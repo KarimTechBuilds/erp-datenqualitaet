@@ -1,0 +1,1 @@
+Erzeugt fehlerhafte Artikelstammdaten, findet die Fehler mit SQL und bereinigt sie mit Python
